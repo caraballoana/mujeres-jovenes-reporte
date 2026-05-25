@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reportes - Mujeres Jóvenes</title>
+
+    <!-- Fuentes Elegantes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rose: { 50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337' },
+                        gold: '#d4af37'
+                    },
+                    fontFamily: { sans: ['Poppins', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-image: linear-gradient(to bottom, rgba(255, 228, 230, 0.85), rgba(253, 164, 175, 0.7)), url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Provo_City_Center_Temple_2.jpg/1920px-Provo_City_Center_Temple_2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.15);
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #fb7185;
+            color: #e11d48;
+            font-weight: 600;
+        }
+
+        .tab-inactive {
+            color: #881337;
+            opacity: 0.7;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #ffe4e6;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #fda4af;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fb7185;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-800 font-sans antialiased">
+
+    <!-- Navbar -->
+    <nav class="glass-panel sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <div class="flex items-center">
+                    <span class="font-serif text-2xl font-bold text-rose-600 tracking-wide">Mujeres Jóvenes</span>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-8 overflow-x-auto text-sm sm:text-base">
+                    <button onclick="navigate('barrio')" id="nav-barrio"
+                        class="text-rose-700 font-medium hover:text-rose-500 transition border-b-2 border-rose-500 pb-1 whitespace-nowrap">Reporte
+                        Barrio</button>
+                    <button onclick="navigate('estaca')" id="nav-estaca"
+                        class="text-gray-500 font-medium hover:text-rose-500 transition pb-1 whitespace-nowrap">Reporte
+                        Estaca</button>
+                    <button onclick="navigate('dashboard')" id="nav-dashboard"
+                        class="text-gray-500 font-medium hover:text-rose-500 transition pb-1 whitespace-nowrap">Dashboard</button>
+                    <button onclick="navigate('comunicaciones')" id="nav-comunicaciones"
+                        class="text-gray-500 font-medium hover:text-rose-500 transition pb-1 whitespace-nowrap">Comunicaciones</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+        <!-- Indicador de Carga -->
+        <div id="loading-spinner"
+            class="hidden fixed inset-0 bg-white/60 backdrop-blur-sm z-[110] flex items-center justify-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-rose-500"></div>
+        </div>
+
+        <div id="success-alert" class="hidden mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-md shadow-sm">
+            <p class="text-sm text-green-700 font-medium">Reporte guardado con éxito en la nube.</p>
+        </div>
+
+        <!-- SECCIÓN 1: REPORTE DE BARRIO -->
+        <section id="sec-barrio" class="glass-panel rounded-3xl p-6 sm:p-10 mb-8 animate-fade-in">
+            <h1 class="font-serif text-3xl sm:text-4xl text-rose-700 font-bold mb-2 text-center">Reporte de Barrio</h1>
+            <p class="text-center text-rose-900/70 mb-8 font-light">Completa la información mensual de tu barrio</p>
+
+            <form id="form-barrio" class="space-y-8">
+                <!-- Datos iniciales (mismos campos que antes) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/50 p-6 rounded-2xl border border-rose-100">
+                    <div>
+                        <label class="block text-sm font-medium text-rose-900 mb-1">Nombre de quien llena</label>
+                        <input type="text" id="b-nombre" required
+                            class="w-full px-4 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 bg-white/80 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-rose-900 mb-1">Barrio</label>
+                        <select id="b-barrio" required
+                            class="w-full px-4 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 bg-white/80 outline-none transition">
+                            <option value="">Selecciona un barrio...</option>
+                            <option value="Barrio Anaco">Barrio Anaco</option>
+                            <option value="Barrio Cantaura">Barrio Cantaura</option>
+                            <option value="Barrio El Tigre">Barrio El Tigre</option>
+                            <option value="Barrio El Tigrito">Barrio El Tigrito</option>
+                            <option value="Barrio Pariaguan">Barrio Pariaguan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-rose-900 mb-1">Mes del Reporte</label>
+                        <select id="b-mes" required
+                            class="w-full px-4 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 bg-white/80 outline-none transition">
+                            <option value="">Selecciona mes...</option>
+                            <option value="Enero">Enero</option>
+                            <option value="Febrero">Febrero</option>
+                            <option value="Marzo">Marzo</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Mayo">Mayo</option>
+                            <option value="Junio">Junio</option>
+                            <option value="Julio">Julio</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Septiembre">Septiembre</option>
+                            <option value="Octubre">Octubre</option>
+                            <option value="Noviembre">Noviembre</option>
+                            <option value="Diciembre">Diciembre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="preguntas-barrio" class="space-y-6"></div>
+
+                <div class="pt-6 flex justify-center">
+                    <button type="submit"
+                        class="bg-gradient-to-r from-rose-400 to-rose-600 hover:from-rose-500 hover:to-rose-700 text-white font-semibold py-3 px-10 rounded-full shadow-lg transform hover:-translate-y-1 transition duration-200">
+                        Enviar Reporte de Barrio
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- SECCIÓN 2: REPORTE DE ESTACA -->
+        <section id="sec-estaca" class="glass-panel rounded-3xl p-6 sm:p-10 mb-8 hidden">
+            <h1 class="font-serif text-3xl sm:text-4xl text-rose-700 font-bold mb-2 text-center">Reporte de Estaca</h1>
+
+            <div class="mb-6 max-w-xs mx-auto">
+                <label class="block text-sm font-medium text-rose-900 mb-1">Mes del Reporte</label>
+                <select id="e-mes" required
+                    class="w-full px-4 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 bg-white/80 outline-none transition">
+                    <option value="">Selecciona mes...</option>
+                    <option value="Enero">Enero</option>
+                    <option value="Febrero">Febrero</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                    <option value="Octubre">Octubre</option>
+                    <option value="Noviembre">Noviembre</option>
+                    <option value="Diciembre">Diciembre</option>
+                </select>
+            </div>
+            <form id="form-estaca">
+                <div class="flex justify-center border-b border-rose-200 mb-8">
+                    <button type="button" onclick="switchEstacaTab('presidenta')" id="tab-presidenta"
+                        class="px-4 py-2 mx-2 tab-active transition-colors">Presidenta</button>
+                    <button type="button" onclick="switchEstacaTab('primera')" id="tab-primera"
+                        class="px-4 py-2 mx-2 tab-inactive hover:text-rose-500 transition-colors">1ra Consejera</button>
+                    <button type="button" onclick="switchEstacaTab('segunda')" id="tab-segunda"
+                        class="px-4 py-2 mx-2 tab-inactive hover:text-rose-500 transition-colors">2da Consejera</button>
+                </div>
+                <div id="content-presidenta" class="space-y-6"></div>
+                <div id="content-primera" class="space-y-6 hidden"></div>
+                <div id="content-segunda" class="space-y-6 hidden"></div>
+                <div class="pt-10 flex justify-center">
+                    <button type="submit"
+                        class="bg-gradient-to-r from-rose-400 to-rose-600 hover:from-rose-500 text-white font-semibold py-3 px-10 rounded-full shadow-lg transform hover:-translate-y-1 transition duration-200">
+                        Enviar Reporte de Estaca
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- SECCIÓN 3: DASHBOARD -->
+        <section id="sec-dashboard" class="glass-panel rounded-3xl p-6 sm:p-10 mb-8 hidden">
+            <h1 class="font-serif text-3xl sm:text-4xl text-rose-700 font-bold mb-8 text-center">Dashboard de
+                Estadísticas</h1>
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mb-8">
+                <select id="filter-mes" onchange="updateDashboard()"
+                    class="px-4 py-2 rounded-xl border border-rose-200 bg-white/80 focus:ring-2 focus:ring-rose-400 outline-none text-sm text-rose-900">
+                    <option value="Todos">Todos los meses</option>
+                    <option value="Enero">Enero</option>
+                    <option value="Febrero">Febrero</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                    <option value="Octubre">Octubre</option>
+                    <option value="Noviembre">Noviembre</option>
+                    <option value="Diciembre">Diciembre</option>
+                </select>
+                <select id="filter-barrio" onchange="updateDashboard()"
+                    class="px-4 py-2 rounded-xl border border-rose-200 bg-white/80 focus:ring-2 focus:ring-rose-400 outline-none text-sm text-rose-900">
+                    <option value="Todos">Todos los barrios</option>
+                    <option value="Barrio Anaco">Barrio Anaco</option>
+                    <option value="Barrio Cantaura">Barrio Cantaura</option>
+                    <option value="Barrio El Tigre">Barrio El Tigre</option>
+                    <option value="Barrio El Tigrito">Barrio El Tigrito</option>
+                    <option value="Barrio Pariaguan">Barrio Pariaguan</option>
+                    <option value="Estaca">Estaca</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white/60 p-6 rounded-2xl border border-rose-100 shadow-sm text-center">
+                    <p class="text-rose-800 text-sm font-medium mb-1">Total Reportes</p>
+                    <p id="kpi-total" class="text-3xl font-serif font-bold text-rose-600">0</p>
+                </div>
+                <div class="bg-white/60 p-6 rounded-2xl border border-rose-100 shadow-sm text-center">
+                    <p class="text-rose-800 text-sm font-medium mb-1">Cumplimiento ("Sí")</p>
+                    <p id="kpi-si" class="text-3xl font-serif font-bold text-rose-600">0%</p>
+                </div>
+                <div class="bg-white/60 p-6 rounded-2xl border border-rose-100 shadow-sm text-center">
+                    <p class="text-rose-800 text-sm font-medium mb-1">Metas en Proceso</p>
+                    <p id="kpi-proceso" class="text-3xl font-serif font-bold text-rose-600">0%</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                <div
+                    class="bg-white/70 p-4 rounded-2xl border border-rose-100 shadow-sm h-80 flex flex-col items-center justify-center">
+                    <canvas id="chartDona"></canvas>
+                </div>
+                <div
+                    class="bg-white/70 p-4 rounded-2xl border border-rose-100 shadow-sm h-80 flex flex-col items-center justify-center">
+                    <canvas id="chartBarras"></canvas>
+                </div>
+            </div>
+
+            <h3 class="font-serif text-2xl text-rose-700 font-bold mb-4">Detalles y Descripciones</h3>
+            <div class="overflow-x-auto bg-white/70 rounded-2xl border border-rose-100 shadow-sm max-h-96">
+                <table class="min-w-full text-left text-sm whitespace-nowrap">
+                    <thead class="uppercase tracking-wider border-b border-rose-200 bg-rose-50 sticky top-0">
+                        <tr>
+                            <th class="px-6 py-4 text-rose-800 font-medium">Barrio</th>
+                            <th class="px-6 py-4 text-rose-800 font-medium">Mes</th>
+                            <th class="px-6 py-4 text-rose-800 font-medium">Nombre</th>
+                            <th class="px-6 py-4 text-rose-800 font-medium">Ver Reporte</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-descripciones" class="divide-y divide-rose-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 4: CENTRO DE COMUNICACIONES -->
+        <div id="content-comunicaciones" class="hidden p-6 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-rose-800 mb-6">Documentos y Recursos</h2>
+
+            <div id="lista-documentos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Autenticación -->
+    <div id="auth-modal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center px-4">
+        <div class="glass-panel p-8 rounded-3xl max-w-sm w-full shadow-2xl relative text-center">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-rose-400"><svg class="w-6 h-6"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg></button>
+            <h2 class="font-serif text-2xl font-bold text-rose-800 mb-2">Acceso Restringido</h2>
+            <p class="text-sm text-rose-900/70 mb-6">Ingresa el código para ver esta sección.</p>
+            <input type="password" id="auth-code"
+                class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 outline-none text-center tracking-widest text-lg mb-4"
+                placeholder="CÓDIGO">
+            <p id="auth-error" class="text-red-500 text-xs mb-4 hidden">Código incorrecto.</p>
+            <button onclick="verifyAuth()"
+                class="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-3 rounded-xl shadow-md">Ingresar</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT TIPO MÓDULO PARA FIREBASE -->
+    <script type="module">
+        // 1. Importar Firebase desde la web
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 🔴 REEMPLAZA ESTO CON LA CONFIGURACIÓN DE TU FIREBASE 🔴
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEquKwKo-5k7Qy4EMgFukipggkllbORnU",
+            authDomain: "mujeres-jovenes-reportes.firebaseapp.com",
+            projectId: "mujeres-jovenes-reportes",
+            storageBucket: "mujeres-jovenes-reportes.firebasestorage.app",
+            messagingSenderId: "778159397787",
+            appId: "1:778159397787:web:db81e0901c9c75498a5f3e"
+        };
+
+        // 2. Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- DATOS Y PREGUNTAS (Sin cambios) ---
+        const preguntasBarrio = [
+            "¿Las jóvenes de 14 años en adelante están incluidas en la lista de ministración de la Sociedad de Socorro?",
+            "¿Se subió la lista de asistencia semanalmente de las mujeres jóvenes?",
+            "¿Realizaron actividades de Mujeres Jóvenes en el mes?",
+            "¿Las jóvenes están asistiendo con regularidad a seminario?",
+            "¿Se trabajó en la lista de Ministración 1 a 1?",
+            "¿Se llevó a cabo reunión de presidencia de mujeres jóvenes?",
+            "¿Las jóvenes cumplieron con una meta de desarrollo personal en el mes?",
+            "¿Se realizó la reunión de presidencia de clase?",
+            "¿Se llevó a cabo la reunión del comité de obispado para la juventud?",
+            "¿Las jóvenes cuentan con recomendación para el templo vigente?",
+            "¿Las jóvenes están organizando el recibir a los miembros los días domingos?"
+        ];
+
+        const preguntasEstaca = {
+            presidenta: ["¿Se llevó a cabo reunión de presidencia de estaca?", "¿Se visitó a los barrios?", "¿Consejo de barrio para juventud?", "¿Comité de líderes de jóvenes?", "¿Presidentas de grupos?", "¿Curso de protección vigente?", "¿Grupos dividiéndose?", "¿Se ministró a Presidenta MJ?"],
+            primera: ["¿Se visitó a los barrios?", "¿Comité de líderes de jóvenes?", "¿Desarrollo personal?", "¿Actividades de mujeres jóvenes?", "¿Se ministró a 1ra Consejera?", "¿Reunión de estaca?"],
+            segunda: ["¿Se visitó a los barrios?", "¿Comité de líderes de jóvenes?", "¿Reunión de estaca?", "¿Se ministró a 2da Consejera?", "¿Asistencia a seminario?"]
+        };
+
+        let chartInstanciaDona = null;
+        let chartInstanciaBarras = null;
+        let targetSeccion = '';
+
+        function renderQuestions(containerId, questions, prefix) {
+            const container = document.getElementById(containerId);
+            let html = '';
+            questions.forEach((q, index) => {
+                const id = `${prefix}_${index}`;
+                html += `
+                <div class="bg-white/50 p-5 rounded-2xl border border-rose-100 hover:shadow-md transition">
+                    <label class="block text-rose-900 font-medium mb-3 text-sm sm:text-base">${index + 1}. ${q}</label>
+                    <div class="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                        <select id="sel_${id}" class="w-full sm:w-40 px-3 py-2 rounded-lg border border-rose-200 outline-none text-rose-900">
+                            <option value="">Seleccione...</option><option value="Sí">Sí</option><option value="No">No</option><option value="En proceso">En proceso</option>
+                        </select>
+                        <textarea id="desc_${id}" rows="2" placeholder="Describe cómo lo hicieron..." class="w-full px-4 py-2 rounded-lg border border-rose-200 outline-none resize-none text-sm"></textarea>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- ENVIAR A FIREBASE (NUEVO) ---
+        async function submitBarrio(e) {
+            e.preventDefault();
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            try {
+                const nuevoReporte = {
+                    fechaRegistro: new Date().toISOString(),
+                    nombre: document.getElementById('b-nombre').value,
+                    barrio: document.getElementById('b-barrio').value,
+                    mes: document.getElementById('b-mes').value,
+                    respuestas: preguntasBarrio.map((q, index) => ({
+                        pregunta: q,
+                        estado: document.getElementById(`sel_b_${index}`).value,
+                        descripcion: document.getElementById(`desc_b_${index}`).value
+                    }))
+                };
+                // Guardar en la colección 'reportes_barrio' de Firebase
+                await addDoc(collection(db, "reportes_barrio"), nuevoReporte);
+
+                document.getElementById('form-barrio').reset();
+                showSuccess();
+            } catch (error) {
+                alert("Error al guardar: " + error.message);
+            }
+            document.getElementById('loading-spinner').classList.add('hidden');
+        }
+
+        async function submitEstaca(e) {
+            e.preventDefault();
+            document.getElementById('loading-spinner').classList.remove('hidden');
+
+            try {
+                // 1. Detectar qué pestaña está activa (el div que NO tiene la clase 'hidden')
+                // Buscamos dentro del formulario el div que empieza con 'content-' y es visible
+                const pestanaActiva = document.querySelector('#form-estaca div:not(.hidden)[id^="content-"]');
+                const idPestana = pestanaActiva.id; // Ej: 'content-presidenta'
+                const rolKey = idPestana.replace('content-', ''); // 'presidenta', 'primera', o 'segunda'
+
+                // 2. Mapeo de prefijos y nombres bonitos
+                const configuracion = {
+                    'presidenta': { prefijo: 'pres', nombre: 'Presidenta' },
+                    'primera': { prefijo: 'c1', nombre: 'Primera Consejera' },
+                    'segunda': { prefijo: 'c2', nombre: 'Segunda Consejera' }
+                };
+
+                const config = configuracion[rolKey];
+
+                // 3. Recolectar respuestas SOLO de la pestaña activa
+                let respuestas = [];
+                preguntasEstaca[rolKey].forEach((q, idx) => {
+                    respuestas.push({
+                        pregunta: q,
+                        estado: document.getElementById(`sel_e_${config.prefijo}_${idx}`).value,
+                        descripcion: document.getElementById(`desc_e_${config.prefijo}_${idx}`).value
+                    });
+                });
+
+                // 4. Guardar un solo documento con el nombre del rol correspondiente
+                await addDoc(collection(db, "reportes_estaca"), {
+                    fecha: new Date().toISOString(),
+                    mes: document.getElementById('e-mes').value,
+                    rol: config.nombre, // Guardará: "Presidenta", "Primera Consejera" o "Segunda Consejera"
+                    respuestas
+                });
+
+                document.getElementById('form-estaca').reset();
+                showSuccess();
+            } catch (error) {
+                alert("Error al guardar: " + error.message);
+            }
+            document.getElementById('loading-spinner').classList.add('hidden');
+        }
+
+        // --- LEER DE FIREBASE PARA DASHBOARD (NUEVO) ---
+        // Variable global para acceder a los reportes desde el modal
+        let reportesFiltradosActuales = [];
+
+        async function updateDashboard() {
+            document.getElementById('loading-spinner').classList.remove('hidden');
+
+            try {
+                const [snapshotBarrio, snapshotEstaca] = await Promise.all([
+                    getDocs(collection(db, "reportes_barrio")),
+                    getDocs(collection(db, "reportes_estaca"))
+                ]);
+
+                let reportes = [];
+                snapshotBarrio.forEach((doc) => reportes.push({ ...doc.data(), id: doc.id, tipo: 'Barrio' }));
+                snapshotEstaca.forEach((doc) => reportes.push({ ...doc.data(), id: doc.id, tipo: 'Estaca', barrio: 'Estaca', nombre: 'Liderazgo Estaca' }));
+
+                // --- AQUÍ ESTÁ EL CAMBIO (ORDENAR) ---
+                // Ordenamos de mayor a menor basándonos en la fecha
+                reportes.sort((a, b) => {
+                    const fechaA = new Date(a.fechaRegistro || a.fecha);
+                    const fechaB = new Date(b.fechaRegistro || b.fecha);
+                    return fechaB - fechaA; // El 'b - a' asegura que el más nuevo esté primero
+                });
+
+                const mesFiltro = document.getElementById('filter-mes').value;
+                const barrioFiltro = document.getElementById('filter-barrio').value;
+
+                reportesFiltradosActuales = reportes.filter(r => {
+                    const cumpleMes = (mesFiltro === 'Todos' || r.mes === mesFiltro);
+                    const cumpleBarrio = (barrioFiltro === 'Todos' || r.barrio === barrioFiltro);
+                    return cumpleMes && cumpleBarrio;
+                });
+
+                // 1. Llenar Tabla
+                let tablaHTML = '';
+                reportesFiltradosActuales.forEach((rep, index) => {
+                    tablaHTML += `
+                <tr class="hover:bg-rose-50/50">
+                    <td class="px-6 py-4 border-b border-rose-100 font-medium">${rep.barrio}</td>
+                    <td class="px-6 py-4 border-b border-rose-100 text-gray-600">${rep.mes || 'N/A'}</td>
+                    <td class="px-6 py-4 border-b border-rose-100 text-gray-600">${rep.rol || "Liderazgo Estaca"}</td>
+                    <td class="px-6 py-4 border-b border-rose-100 text-right">
+                        <button onclick="abrirModal(${index})" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                            Ver Reporte
+                        </button>
+                    </td>
+                </tr>`;
+                });
+                document.getElementById('tabla-descripciones').innerHTML = tablaHTML || '<tr><td colspan="4" class="text-center py-4 text-rose-500">No hay datos para mostrar</td></tr>';
+
+                // 2. Calcular Estadísticas (KPIs)
+                let totalReportes = reportesFiltradosActuales.length;
+                let conteoEstados = { 'Sí': 0, 'No': 0, 'En proceso': 0 };
+                let totalRespuestas = 0;
+                let barrioStats = {};
+
+                reportesFiltradosActuales.forEach(r => {
+                    // Contar para gráfico de barras (metas cumplidas por barrio)
+                    barrioStats[r.barrio] = (barrioStats[r.barrio] || 0) + 1;
+
+                    if (r.respuestas) {
+                        r.respuestas.forEach(res => {
+                            totalRespuestas++;
+                            if (conteoEstados.hasOwnProperty(res.estado)) {
+                                conteoEstados[res.estado]++;
+                            }
+                        });
+                    }
+                });
+
+                // 3. Actualizar KPIs en pantalla
+                document.getElementById('kpi-total').innerText = totalReportes;
+
+                const pctSi = totalRespuestas > 0 ? Math.round((conteoEstados['Sí'] / totalRespuestas) * 100) : 0;
+                const pctProceso = totalRespuestas > 0 ? Math.round((conteoEstados['En proceso'] / totalRespuestas) * 100) : 0;
+
+                document.getElementById('kpi-si').innerText = pctSi + "%";
+                document.getElementById('kpi-proceso').innerText = pctProceso + "%";
+
+                // 4. Dibujar Gráficos
+                dibujarGraficos(conteoEstados['Sí'], conteoEstados['No'], conteoEstados['En proceso'], barrioStats);
+
+            } catch (error) {
+                console.error("Error al actualizar dashboard:", error);
+                alert("Hubo un error al cargar los datos.");
+            }
+            document.getElementById('loading-spinner').classList.add('hidden');
+        }
+
+        function abrirModal(index) {
+            const rep = reportesFiltradosActuales[index];
+            const modalCuerpo = document.getElementById('modal-cuerpo');
+            document.getElementById('modal-titulo').innerText = `Reporte de ${rep.barrio} - ${rep.mes}`;
+
+            let contenido = '<div class="space-y-6">'; // Aumenté space-y a 6 para mejor separación visual
+            rep.respuestas.forEach(r => {
+                const color = r.estado === 'Sí' ? 'bg-green-100 text-green-800' : (r.estado === 'No' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+
+                // CAMBIO: Usamos 'flex flex-col' para apilar verticalmente
+                contenido += `
+            <div class="border-b border-gray-100 pb-4">
+                <p class="text-sm font-bold text-gray-800 mb-2">${r.pregunta}</p>
+                <div class="flex flex-col items-start gap-2">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${color}">${r.estado}</span>
+                    <span class="text-sm text-gray-600 italic">"${r.descripcion || 'Sin descripción'}"</span>
+                </div>
+            </div>`;
+            });
+            contenido += '</div>';
+
+            modalCuerpo.innerHTML = contenido;
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalle').classList.add('hidden');
+        }
+
+        function dibujarGraficos(si, no, proceso, barrioStats) {
+            if (chartInstanciaDona) chartInstanciaDona.destroy();
+            if (chartInstanciaBarras) chartInstanciaBarras.destroy();
+            Chart.defaults.font.family = "'Poppins', sans-serif";
+
+            chartInstanciaDona = new Chart(document.getElementById('chartDona').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ['Sí', 'En proceso', 'No'], datasets: [{ data: [si, proceso, no], backgroundColor: ['#10b981', '#fbbf24', '#f43f5e'], borderWidth: 0 }] },
+                options: { maintainAspectRatio: false }
+            });
+
+            chartInstanciaBarras = new Chart(document.getElementById('chartBarras').getContext('2d'), {
+                type: 'bar',
+                data: { labels: Object.keys(barrioStats), datasets: [{ label: 'Metas Cumplidas', data: Object.values(barrioStats), backgroundColor: '#fb7185' }] },
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // Utilidades de Interfaz exportadas al Window para que funcionen con los botones del HTML
+        window.navigate = function (seccion) {
+            // 1. Verificación de seguridad (mantenemos tu lógica actual)
+            if ((seccion === 'estaca' || seccion === 'dashboard') && sessionStorage.getItem('mj_auth') !== 'true') {
+                targetSeccion = seccion;
+                document.getElementById('auth-modal').classList.remove('hidden');
+                return;
+            }
+
+            // 2. Definir todas las secciones disponibles
+            const todasLasSecciones = ['barrio', 'estaca', 'dashboard', 'comunicaciones'];
+
+            todasLasSecciones.forEach(s => {
+                // Determinamos el ID correcto: las viejas usan 'sec-', la nueva usa 'content-'
+                const id = (s === 'comunicaciones') ? `content-${s}` : `sec-${s}`;
+                const elemento = document.getElementById(id);
+
+                if (elemento) elemento.classList.add('hidden');
+
+                // Limpiar el estilo de los botones
+                const nav = document.getElementById(`nav-${s}`);
+                if (nav) {
+                    nav.classList.remove('text-rose-700', 'border-b-2', 'border-rose-500');
+                    nav.classList.add('text-gray-500');
+                }
+            });
+
+            // 3. Mostrar la sección seleccionada
+            const idSeleccionado = (seccion === 'comunicaciones') ? `content-${seccion}` : `sec-${seccion}`;
+            document.getElementById(idSeleccionado).classList.remove('hidden');
+            document.getElementById(`nav-${seccion}`).classList.add('text-rose-700', 'border-b-2', 'border-rose-500');
+
+            // 4. Funciones específicas al cambiar
+            if (seccion === 'dashboard') updateDashboard();
+            if (seccion === 'comunicaciones') {
+                // Aquí llamaremos a la función para cargar documentos
+                if (typeof cargarDocumentos === 'function') cargarDocumentos();
+            }
+        };
+
+        async function cargarDocumentos() {
+    const contenedor = document.getElementById('lista-documentos');
+    contenedor.innerHTML = '<p class="text-gray-500 p-4">Cargando...</p>';
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "documentos_recursos"));
+        let html = '';
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            // Tarjeta simple sin botones de edición/borrado
+            html += `
+                <div class="bg-white p-5 border rounded-xl hover:shadow-md transition-all shadow-sm">
+                    <div class="text-3xl mb-2">${d.icono}</div>
+                    <h3 class="font-semibold text-gray-800">${d.titulo}</h3>
+                    <a href="${d.url}" target="_blank" class="block text-sm text-rose-500 mt-2 font-medium">Ver documento →</a>
+                </div>
+            `;
+        });
+        contenedor.innerHTML = html || '<p class="p-4 text-gray-500">No hay documentos registrados.</p>';
+    } catch (e) {
+        console.error("Error al cargar:", e);
+    }
+}
+
+        window.verifyAuth = function () {
+            if (document.getElementById('auth-code').value.trim().toUpperCase() === 'ESTACA') {
+                sessionStorage.setItem('mj_auth', 'true');
+                document.getElementById('auth-modal').classList.add('hidden');
+                window.navigate(targetSeccion);
+            } else {
+                document.getElementById('auth-error').classList.remove('hidden');
+            }
+        };
+
+        window.closeAuthModal = () => document.getElementById('auth-modal').classList.add('hidden');
+        window.switchEstacaTab = function (tab) {
+            ['presidenta', 'primera', 'segunda'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = 'px-4 py-2 mx-2 tab-inactive hover:text-rose-500 transition-colors';
+            });
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = 'px-4 py-2 mx-2 tab-active transition-colors';
+        };
+
+        function showSuccess() {
+            const alert = document.getElementById('success-alert');
+            alert.classList.remove('hidden');
+            setTimeout(() => alert.classList.add('hidden'), 3000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Asignar eventos de Submit
+        document.getElementById('form-barrio').addEventListener('submit', submitBarrio);
+        document.getElementById('form-estaca').addEventListener('submit', submitEstaca);
+
+        // Iniciar
+        renderQuestions('preguntas-barrio', preguntasBarrio, 'b');
+        renderQuestions('content-presidenta', preguntasEstaca.presidenta, 'e_pres');
+        renderQuestions('content-primera', preguntasEstaca.primera, 'e_c1');
+        renderQuestions('content-segunda', preguntasEstaca.segunda, 'e_c2');
+
+        window.updateDashboard = updateDashboard; // Para los filtros
+        // EXPOSICIÓN DE FUNCIONES PARA EL HTML
+        window.abrirModal = abrirModal;
+        window.cerrarModal = cerrarModal;
+        window.updateDashboard = updateDashboard;
+        window.navigate = navigate;
+        window.verifyAuth = verifyAuth;
+        window.closeAuthModal = closeAuthModal;
+        window.switchEstacaTab = switchEstacaTab;
+    </script>
+    <div id="modal-detalle"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-rose-800" id="modal-titulo">Detalles del Reporte</h2>
+                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+            </div>
+            <div id="modal-cuerpo" class="space-y-4">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
