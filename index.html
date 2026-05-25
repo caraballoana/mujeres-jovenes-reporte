@@ -537,6 +537,7 @@
 
                 document.getElementById('kpi-si').innerText = pctSi + "%";
                 document.getElementById('kpi-proceso').innerText = pctProceso + "%";
+                console.log("Total Respuestas:", totalRespuestas, "Sí:", conteoEstados['Sí'], "En proceso:", conteoEstados['En proceso']);
 
                 // 4. Dibujar Gráficos
                 dibujarGraficos(conteoEstados['Sí'], conteoEstados['No'], conteoEstados['En proceso'], barrioStats);
@@ -636,28 +637,28 @@
         };
 
         async function cargarDocumentos() {
-    const contenedor = document.getElementById('lista-documentos');
-    contenedor.innerHTML = '<p class="text-gray-500 p-4">Cargando...</p>';
+            const contenedor = document.getElementById('lista-documentos');
+            contenedor.innerHTML = '<p class="text-gray-500 p-4">Cargando...</p>';
 
-    try {
-        const querySnapshot = await getDocs(collection(db, "documentos_recursos"));
-        let html = '';
-        querySnapshot.forEach((doc) => {
-            const d = doc.data();
-            // Tarjeta simple sin botones de edición/borrado
-            html += `
+            try {
+                const querySnapshot = await getDocs(collection(db, "documentos_recursos"));
+                let html = '';
+                querySnapshot.forEach((doc) => {
+                    const d = doc.data();
+                    // Tarjeta simple sin botones de edición/borrado
+                    html += `
                 <div class="bg-white p-5 border rounded-xl hover:shadow-md transition-all shadow-sm">
                     <div class="text-3xl mb-2">${d.icono}</div>
                     <h3 class="font-semibold text-gray-800">${d.titulo}</h3>
                     <a href="${d.url}" target="_blank" class="block text-sm text-rose-500 mt-2 font-medium">Ver documento →</a>
                 </div>
             `;
-        });
-        contenedor.innerHTML = html || '<p class="p-4 text-gray-500">No hay documentos registrados.</p>';
-    } catch (e) {
-        console.error("Error al cargar:", e);
-    }
-}
+                });
+                contenedor.innerHTML = html || '<p class="p-4 text-gray-500">No hay documentos registrados.</p>';
+            } catch (e) {
+                console.error("Error al cargar:", e);
+            }
+        }
 
         window.verifyAuth = function () {
             if (document.getElementById('auth-code').value.trim().toUpperCase() === 'ESTACA') {
